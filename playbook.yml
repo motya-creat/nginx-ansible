@@ -1,0 +1,36 @@
+---
+- name: cайт на Nginx
+  hosts: webservers        # замените на ваш инвентарный хост или localhost
+  become: true
+
+  vars:
+    app_name: "my-app"
+    root_dir: "/var/www/nginx"
+    nginx_port: 8080
+
+  tasks:
+    - name: Каталог сайта
+      ansible.builtin.file:
+        path: "{{ root_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: HTML страница
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: "{{ root_dir }}/index.html"
+        mode: "0644"
+        notify: Перечитать Nginx
+
+    - name: Конфиг Nginx
+      ansible.builtin.template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        mode: "0644"
+        notify: Перечитать Nginx
+
+  handlers:
+    - name: Перечитать Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
